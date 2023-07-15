@@ -47,8 +47,10 @@ def sendValue(channel,Value,timout = 0):
         # print('<------------newline---------->')
         return plain_text
         
-        # Lưu chuỗi plain_text sang file login
+        # Lưu chuỗi plain_text sang file log
         # ...
+        with open('log.txt', 'a') as f:
+            f.write(plain_text+'\n<------------new screen---------->\n')
 
 # Tạo đối tượng SSHClient
 client = paramiko.SSHClient()
