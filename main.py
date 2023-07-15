@@ -60,6 +60,7 @@ try:
     client.connect(config['hostname'], config['port'], config['username'], config['password'])
 except:
     print('Connection to the server failed!')
+    input('Press any key to close...')
     sys.exit(1)
 
 # Tạo kênh kết nối
