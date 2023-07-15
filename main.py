@@ -23,12 +23,14 @@ def read_excel_to_json(file_path):
 
 	# Trả về mảng JSON
 	return json.loads(json_data)
+
 def save_json_to_excel(json_data, file_path):
     # Tạo DataFrame từ mảng JSON
     df = pd.DataFrame(json_data)
     
     # Lưu DataFrame thành file Excel
     df.to_excel(file_path, index=False)
+    
 def sendValue(channel,Value,timout = 0):
     time.sleep(timout)
     channel.send(Value)
