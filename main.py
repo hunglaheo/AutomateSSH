@@ -51,15 +51,14 @@ def sendValue(channel,Value,timout = 0):
         # ...
 
 # Tạo đối tượng SSHClient
-try:
-    client = paramiko.SSHClient()
-    client.load_system_host_keys()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+client = paramiko.SSHClient()
+client.load_system_host_keys()
+client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+try:
     # Kết nối tới máy chủ SSH
     client.connect(config['hostname'], config['port'], config['username'], config['password'])
-
-except paramiko.SSHException as e:
+except:
     print('Connection to the server failed!')
     sys.exit(1)
 
