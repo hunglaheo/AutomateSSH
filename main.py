@@ -23,7 +23,12 @@ def read_excel_to_json(file_path):
 
 	# Trả về mảng JSON
 	return json.loads(json_data)
-
+def save_json_to_excel(json_data, file_path):
+    # Tạo DataFrame từ mảng JSON
+    df = pd.DataFrame(json_data)
+    
+    # Lưu DataFrame thành file Excel
+    df.to_excel(file_path, index=False)
 def sendValue(channel,Value,timout = 0):
     time.sleep(timout)
     channel.send(Value)
@@ -35,8 +40,8 @@ def sendValue(channel,Value,timout = 0):
         plain_text = html2text.html2text(cleaned_output)
 
         # In kết quả đã được xử lý
-        print(plain_text)
-        print('<------------newline---------->')
+        # print(plain_text)
+        # print('<------------newline---------->')
         return plain_text
         
         # Lưu chuỗi plain_text sang file login
@@ -70,7 +75,6 @@ if config['need_login'] == 'yes':
 excels = read_excel_to_json(config['excel_file_name'])
 
 for i in range(len(excels)):
-
     sendValue(channel,excels[i][config['location_column_name']])
     output = sendValue(channel,'\r')
     # Lay noi dung man hinh de tach chuoi
@@ -88,10 +92,10 @@ for i in range(len(excels)):
                 
                 # Lưu kết quả row_array[1] vào cột config['result_column_name']
                 # ...
-                
+                excels[i][config['result_column_name']] = row_array[1]
                 # Xuất kết quả ra màn hình: "Picked row_array[1] CS from location config['location_column_name']"
                 # ...
-                
+                print("Picked "+row_array[1]+" CS from location "+config['location_column_name'])
             else:
                 sendValue(channel,b'\x1b[B')
                 sendValue(channel,b'\x1b[B')
@@ -104,11 +108,12 @@ for i in range(len(excels)):
                 sendValue(channel,b'\x1b[B')
                 check_locn_lane = sendValue(channel,'\r')
                 
-                # Lưu kết quả config['quantity_column_name'] vào cột config['result_column_name']
+                # Lưu kết quả row_array[1] vào cột config['result_column_name']
                 # ...
-                
-                # Xuất kết quả ra màn hình: "Picked config['quantity_column_name'] CS from location config['location_column_name']"
+                excels[i][config['result_column_name']] = row_array[1]
+                # Xuất kết quả ra màn hình: "Picked row_array[1] CS from location config['location_column_name']"
                 # ...
+                print("Picked "+row_array[1]+" CS from location "+config['location_column_name'])
                 
             # Kiểm tra màn hình hiện tại có dòng "Scan Locn/Lane:" hay không?
             for row_locn_lane in check_locn_lane.split("\n"):
@@ -119,6 +124,7 @@ for i in range(len(excels)):
                     
                     # Xuất kết quả ra màn hình: "Taked item/s to config['export_door_column_name']"
                     # ...
+                    print("Taked item/s to "+config['export_door_column_name'])
                 
             # Check Pack ID ở ô kế tiếp, nếu trùng thì nhập From Location, nếu không trùng thì End
             # Có thể sẽ không cần đoạn code này, vì đang test thì có thể nhập đồng thời nhiều Pack ID, khi nào khác cửa mới nhập
@@ -130,7 +136,8 @@ for i in range(len(excels)):
             #    sendValue(channel,'\r')
                 
             break
-
+#Ghi xuống file excel
+save_json_to_excel(excels)
 # ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 # output_clean = ansi_escape.sub('', output)
   # Nhận kết quả
