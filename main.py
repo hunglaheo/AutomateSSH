@@ -171,3 +171,7 @@ save_json_to_excel(excels, 'Result_'+config['excel_file_name'])
 # Đóng kết nối
 channel.close()
 client.close()
+
+print('Done!')
+input('Press any key to close...')
+sys.exit(1)
