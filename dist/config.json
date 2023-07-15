@@ -1,0 +1,17 @@
+{
+	"hostname": "10.153.15.37",
+	"port": "22",
+	"username": "rftestsdc",
+	"password": "rftestsdc",
+	"need_login": "no",
+	"operator_code": "w12",
+	"app_username": "linhl",
+	"app_password": "lnl132",
+	"excel_file_name": "PAK1.xls",
+	"location_column_name": "From Location",
+	"quantity_column_name": "Quantity",
+	"container_column_name": "Pack ID",
+	"export_door_column_name": "To Location",
+	"result_column_name": "Result",
+	"testing": "yes"
+}
