@@ -1,0 +1,6 @@
+paramiko
+pandas
+openpyxl
+xlrd
+ansi2html
+html2text
