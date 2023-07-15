@@ -5,6 +5,7 @@ import json
 import re
 from ansi2html import Ansi2HTMLConverter
 import html2text
+import sys
 
 # Thông tin kết nối SSH
 # hostname = '10.153.15.37'
@@ -30,7 +31,7 @@ def save_json_to_excel(json_data, file_path):
     
     # Lưu DataFrame thành file Excel
     df.to_excel(file_path, index=False)
-    
+
 def sendValue(channel,Value,timout = 0):
     time.sleep(timout)
     channel.send(Value)
@@ -50,12 +51,17 @@ def sendValue(channel,Value,timout = 0):
         # ...
 
 # Tạo đối tượng SSHClient
-client = paramiko.SSHClient()
-client.load_system_host_keys()
-client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+try:
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-# Kết nối tới máy chủ SSH
-client.connect(config['hostname'], config['port'], config['username'], config['password'])
+    # Kết nối tới máy chủ SSH
+    client.connect(config['hostname'], config['port'], config['username'], config['password'])
+
+except paramiko.SSHException as e:
+    print('Connection to the server failed!')
+    sys.exit(1)
 
 # Tạo kênh kết nối
 channel = client.invoke_shell()
