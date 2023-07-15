@@ -13,4 +13,5 @@
 	"container_column_name": "Pack ID",
 	"export_door_column_name": "To Location",
 	"result_column_name": "Result",
+	"testing": "Yes"
 }
