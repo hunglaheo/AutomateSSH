@@ -85,9 +85,13 @@ excels = read_excel_to_json(config['excel_file_name'])
 for i in range(len(excels)):
     sendValue(channel,excels[i][config['location_column_name']])
     output = sendValue(channel,'\r')
+
     # Lay noi dung man hinh de tach chuoi
+    isset_pick = False
     for row in output.split("\n"):
         if "Pick" in row:
+            isset_pick = True
+
             row_array = row.strip().split(" ")
             if int(row_array[1]) <= excels[i][config['quantity_column_name']]:
                 sendValue(channel,b'\x1b[B')
@@ -144,8 +148,18 @@ for i in range(len(excels)):
             #    sendValue(channel,'\r')
                 
             break
+
+    # Nếu isset_pick = False thì có nghĩa là màn hình này là màn hình báo lỗi
+    if isset_pick == False:
+        excels[i][config['result_column_name']] = "Error!!!"
+        save_json_to_excel(excels, 'Result_'+config['excel_file_name'])
+
+        print(config['location_column_name']+" error!!!")
+        input('Press any key to close...')
+        sys.exit(1)
+
 #Ghi xuống file excel
-save_json_to_excel(excels)
+save_json_to_excel(excels, 'Result_'+config['excel_file_name'])
 # ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 # output_clean = ansi_escape.sub('', output)
   # Nhận kết quả
