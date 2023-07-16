@@ -13,6 +13,8 @@ import sys
 # username = 'rftestsdc'
 # password = 'rftestsdc'
 
+global config
+
 with open("config.json") as json_config_file:
 	config = json.load(json_config_file)
 
@@ -42,15 +44,16 @@ def sendValue(channel,Value,timout = 0):
         cleaned_output = converter.convert(output)
         plain_text = html2text.html2text(cleaned_output)
 
+        # Lưu chuỗi plain_text sang file log
+        # ...
+        if config['log'] == 'on':
+            with open('log.txt', 'a') as f:
+                f.write(plain_text+'\n<------------new screen---------->\n')
+
         # In kết quả đã được xử lý
         # print(plain_text)
         # print('<------------newline---------->')
         return plain_text
-        
-        # Lưu chuỗi plain_text sang file log
-        # ...
-        with open('log.txt', 'a') as f:
-            f.write(plain_text+'\n<------------new screen---------->\n')
 
 # Tạo đối tượng SSHClient
 client = paramiko.SSHClient()
