@@ -85,10 +85,18 @@ if config['need_login'] == 'yes':
     sendValue(channel,'\r')
     sendValue(channel,'\r')
 
-excels = read_excel_to_json(config['excel_file_name'])
+excels = pd.read_excel(config['excel_file_name'])
 
-for i in range(len(excels)):
-    sendValue(channel,excels[i][config['location_column_name']])
+# Bỏ hàng từ 1 đến 13
+column_names = excels.iloc[12]
+excels = excels.iloc[13:-1]
+excels.columns = column_names
+
+# Bỏ cột bằng chỉ số cột (ở đây ta bỏ cột đầu tiên, tức cột 0)
+excels = excels.drop(excels.columns[0], axis=1)
+
+for index, row in excels.iterrows():
+    sendValue(channel,row[config['location_column_name']])
     output = sendValue(channel,'\r')
 
     # Lay noi dung man hinh de tach chuoi
@@ -98,18 +106,18 @@ for i in range(len(excels)):
             isset_pick = True
 
             row_array = row.strip().split(" ")
-            if int(row_array[1]) <= excels[i][config['quantity_column_name']]:
+            if int(row_array[1]) <= row[config['quantity_column_name']]:
                 sendValue(channel,b'\x1b[B')
                 sendValue(channel,'\r')
                 sendValue(channel,row_array[1])
                 sendValue(channel,b'\x1b[B')
-                sendValue(channel,excels[i][config['container_column_name']]) # vị trí nhập Container là cột Pack ID trong file excel
+                sendValue(channel,row[config['container_column_name']]) # vị trí nhập Container là cột Pack ID trong file excel
                 sendValue(channel,b'\x1b[B')
                 check_locn_lane = sendValue(channel,'\r')
                 
                 # Lưu kết quả row_array[1] vào cột config['result_column_name']
                 # ...
-                excels[i][config['result_column_name']] = row_array[1]
+                row[config['result_column_name']] = row_array[1]
                 # Xuất kết quả ra màn hình: "Picked row_array[1] CS from location config['location_column_name']"
                 # ...
                 print("Picked "+row_array[1]+" CS from location "+config['location_column_name'])
@@ -117,17 +125,17 @@ for i in range(len(excels)):
                 sendValue(channel,b'\x1b[B')
                 sendValue(channel,b'\x1b[B')
                 sendValue(channel,'\r')
-                sendValue(channel,excels[i][config['quantity_column_name']])
+                sendValue(channel,row[config['quantity_column_name']])
                 sendValue(channel,'\r')
-                sendValue(channel,excels[i][config['quantity_column_name']])
+                sendValue(channel,row[config['quantity_column_name']])
                 sendValue(channel,b'\x1b[B')
-                sendValue(channel,excels[i][config['container_column_name']])
+                sendValue(channel,row[config['container_column_name']])
                 sendValue(channel,b'\x1b[B')
                 check_locn_lane = sendValue(channel,'\r')
                 
                 # Lưu kết quả row_array[1] vào cột config['result_column_name']
                 # ...
-                excels[i][config['result_column_name']] = row_array[1]
+                row[config['result_column_name']] = row_array[1]
                 # Xuất kết quả ra màn hình: "Picked row_array[1] CS from location config['location_column_name']"
                 # ...
                 print("Picked "+row_array[1]+" CS from location "+config['location_column_name'])
@@ -136,7 +144,7 @@ for i in range(len(excels)):
             for row_locn_lane in check_locn_lane.split("\n"):
                 if "Locn/Lane" in row_locn_lane:
                     # Nhập cửa
-                    sendValue(channel,excels[i][config['export_door_column_name']])
+                    sendValue(channel,row[config['export_door_column_name']])
                     sendValue(channel,'\r')
                     
                     # Xuất kết quả ra màn hình: "Taked item/s to config['export_door_column_name']"
@@ -156,7 +164,7 @@ for i in range(len(excels)):
 
     # Nếu isset_pick = False thì có nghĩa là màn hình này là màn hình báo lỗi
     if isset_pick == False:
-        excels[i][config['result_column_name']] = "Error!!!"
+        row[config['result_column_name']] = "Error!!!"
         save_json_to_excel(excels, 'Result_'+config['excel_file_name'])
 
         print(config['location_column_name']+" error!!!")
