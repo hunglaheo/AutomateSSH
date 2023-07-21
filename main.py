@@ -87,6 +87,8 @@ if config['need_login'] == 'yes':
 
 excels = pd.read_excel(config['excel_file_name'])
 
+door = excels.iloc[3,1][6:].strip()
+
 # Bỏ hàng từ 1 đến 13
 column_names = excels.iloc[12]
 excels = excels.iloc[13:-1]
@@ -94,6 +96,9 @@ excels.columns = column_names
 
 # Bỏ cột bằng chỉ số cột (ở đây ta bỏ cột đầu tiên, tức cột 0)
 excels = excels.drop(excels.columns[0], axis=1)
+
+# tạo mảng cho cột kết quả
+result_column = []
 
 for index, row in excels.iterrows():
     sendValue(channel,row[config['location_column_name']])
@@ -117,7 +122,8 @@ for index, row in excels.iterrows():
                 
                 # Lưu kết quả row_array[1] vào cột config['result_column_name']
                 # ...
-                row[config['result_column_name']] = row_array[1]
+                #row[config['result_column_name']] = row_array[1]
+                result_column.append(row_array[1])
                 # Xuất kết quả ra màn hình: "Picked row_array[1] CS from location config['location_column_name']"
                 # ...
                 print("Picked "+row_array[1]+" CS from location "+config['location_column_name'])
@@ -135,7 +141,8 @@ for index, row in excels.iterrows():
                 
                 # Lưu kết quả row_array[1] vào cột config['result_column_name']
                 # ...
-                row[config['result_column_name']] = row_array[1]
+                #row[config['result_column_name']] = row_array[1]
+                result_column.append(row_array[1])
                 # Xuất kết quả ra màn hình: "Picked row_array[1] CS from location config['location_column_name']"
                 # ...
                 print("Picked "+row_array[1]+" CS from location "+config['location_column_name'])
@@ -144,12 +151,12 @@ for index, row in excels.iterrows():
             for row_locn_lane in check_locn_lane.split("\n"):
                 if "Locn/Lane" in row_locn_lane:
                     # Nhập cửa
-                    sendValue(channel,row[config['export_door_column_name']])
+                    sendValue(channel,door)
                     sendValue(channel,'\r')
                     
                     # Xuất kết quả ra màn hình: "Taked item/s to config['export_door_column_name']"
                     # ...
-                    print("Taked item/s to "+config['export_door_column_name'])
+                    print("Taked item/s to "+door)
                 
             # Check Pack ID ở ô kế tiếp, nếu trùng thì nhập From Location, nếu không trùng thì End
             # Có thể sẽ không cần đoạn code này, vì đang test thì có thể nhập đồng thời nhiều Pack ID, khi nào khác cửa mới nhập
@@ -164,15 +171,20 @@ for index, row in excels.iterrows():
 
     # Nếu isset_pick = False thì có nghĩa là màn hình này là màn hình báo lỗi
     if isset_pick == False:
-        row[config['result_column_name']] = "Error!!!"
-        save_json_to_excel(excels, 'Result_'+config['excel_file_name'])
+        #row[config['result_column_name']] = "Error!!!"
+        result_column.append("Error!!!")
+        excels[config['result_column_name']] = result_column
+        #save_json_to_excel(excels, 'Result_'+config['excel_file_name'])
+        excels.to_excel('Result_'+config['excel_file_name'], index=False)
 
         print(config['location_column_name']+" error!!!")
         input('Press any key to close...')
         sys.exit(1)
 
 #Ghi xuống file excel
-save_json_to_excel(excels, 'Result_'+config['excel_file_name'])
+excels[config['result_column_name']] = result_column
+excels.to_excel('Result_'+config['excel_file_name'], index=False)
+#save_json_to_excel(excels, 'Result_'+config['excel_file_name'])
 # ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 # output_clean = ansi_escape.sub('', output)
   # Nhận kết quả
