@@ -1,4 +1,4 @@
-import paramiko
+import telnetlib
 import time
 import pandas as pd
 import json
@@ -18,28 +18,12 @@ global config
 with open("config.json") as json_config_file:
 	config = json.load(json_config_file)
 
-def read_excel_to_json(file_path):
-	# Đọc file Excel
-	df = pd.read_excel(file_path)
-	# Chuyển đổi dữ liệu thành mảng JSON
-	json_data = df.to_json(orient='records')
-
-	# Trả về mảng JSON
-	return json.loads(json_data)
-
-def save_json_to_excel(json_data, file_path):
-    # Tạo DataFrame từ mảng JSON
-    df = pd.DataFrame(json_data)
-    
-    # Lưu DataFrame thành file Excel
-    df.to_excel(file_path, index=False)
-
-def sendValue(channel,Value,timout = 0):
-    time.sleep(timout)
-    channel.send(Value)
-    if Value != b'\x1b[B':
+def sendValue(tn,value,timeout=0):
+    time.sleep(timeout)
+    tn.write(value.encode('ascii'))
+    if value != b'\x1b[B':
         time.sleep(0.5)
-        output = channel.recv(4096).decode('utf-8')
+        output = tn.read_very_eager().decode('utf-8')
         converter = Ansi2HTMLConverter()
         cleaned_output = converter.convert(output)
         plain_text = html2text.html2text(cleaned_output)
@@ -55,37 +39,31 @@ def sendValue(channel,Value,timout = 0):
         # print('<------------newline---------->')
         return plain_text
 
-# Tạo đối tượng SSHClient
-client = paramiko.SSHClient()
-client.load_system_host_keys()
-client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
 try:
-    # Kết nối tới máy chủ SSH
-    client.connect(config['hostname'], config['port'], config['username'], config['password'])
+    # Tạo kết nối Telnet
+    tn = telnetlib.Telnet(config['hostname'], config['port'])
+    #tn.set_debuglevel(1)  # Chỉ để debug, có thể loại bỏ dòng này khi hoạt động bình thường
+    # Đăng nhập vào máy chủ
+    tn.login(config['username'], config['password'])
 except:
     print('Connection to the server failed!')
     input('Press any key to close...')
     sys.exit(1)
 
-# Tạo kênh kết nối
-channel = client.invoke_shell()
-channel.settimeout(30)
-
 time.sleep(4)
 
 if config['need_login'] == 'yes':
     # login
-    sendValue(channel,'\r',timout=4) # Vì đây là login đầu tiên nên phải đợi 3s để load hoàn toàn
-    sendValue(channel,config['operator_code'])
-    sendValue(channel,'\r')
-    sendValue(channel,config['app_username'])
-    sendValue(channel,'\r')
-    sendValue(channel,config['app_password'])
-    sendValue(channel,'\r')
-    sendValue(channel,'\r')
-    sendValue(channel,'\r')
-    sendValue(channel,'\r')
+    sendValue(tn,'\r\n',timout=4) # Vì đây là login đầu tiên nên phải đợi 3s để load hoàn toàn
+    sendValue(tn,config['operator_code'])
+    sendValue(tn,'\r\n')
+    sendValue(tn,config['app_username'])
+    sendValue(tn,'\r\n')
+    sendValue(tn,config['app_password'])
+    sendValue(tn,'\r\n')
+    sendValue(tn,'\r\n')
+    sendValue(tn,'\r\n')
+    sendValue(tn,'\r\n')
 
 excels = pd.read_excel(config['excel_file_name'])
 
@@ -106,27 +84,27 @@ skip_location = config['skip_location']
 
 for index, row in excels.iterrows():
     if skip_location == 'no':
-        sendValue(channel,row[config['location_column_name']])
+        sendValue(tn,row[config['location_column_name']])
     else:
         skip_location = 'no'
 
-    output = sendValue(channel,'\r')
+    output = sendValue(tn,'\r\n')
 
     # Lay noi dung man hinh de tach chuoi
     isset_pick = False
-    for line in output.split("\n"):
+    for line in output.splitlines():
         if "Pick" in line:
             isset_pick = True
 
             row_array = line.strip().split(" ")
             if int(row_array[1]) <= row[config['quantity_column_name']] :
-                sendValue(channel,b'\x1b[B')
-                sendValue(channel,'\r')
-                sendValue(channel,row_array[1])
-                sendValue(channel,b'\x1b[B')
-                sendValue(channel,row[config['container_column_name']]) # vị trí nhập Container là cột Pack ID trong file excel
-                sendValue(channel,b'\x1b[B')
-                check_locn_lane = sendValue(channel,'\r')
+                sendValue(tn,b'\x1b[B')
+                sendValue(tn,'\r\n')
+                sendValue(tn,row_array[1])
+                sendValue(tn,b'\x1b[B')
+                sendValue(tn,row[config['container_column_name']]) # vị trí nhập Container là cột Pack ID trong file excel
+                sendValue(tn,b'\x1b[B')
+                check_locn_lane = sendValue(tn,'\r\n')
                 
                 # Lưu kết quả row_array[1] vào cột config['result_column_name']
                 # ...
@@ -136,16 +114,16 @@ for index, row in excels.iterrows():
                 # ...
                 print("Picked "+row_array[1]+" CS from location "+row[config['location_column_name']])
             else:
-                sendValue(channel,b'\x1b[B')
-                sendValue(channel,b'\x1b[B')
-                sendValue(channel,'\r')
-                sendValue(channel,row[config['quantity_column_name']])
-                sendValue(channel,'\r')
-                sendValue(channel,row[config['quantity_column_name']])
-                sendValue(channel,b'\x1b[B')
-                sendValue(channel,row[config['container_column_name']])
-                sendValue(channel,b'\x1b[B')
-                check_locn_lane = sendValue(channel,'\r')
+                sendValue(tn,b'\x1b[B')
+                sendValue(tn,b'\x1b[B')
+                sendValue(tn,'\r\n')
+                sendValue(tn,row[config['quantity_column_name']])
+                sendValue(tn,'\r\n')
+                sendValue(tn,row[config['quantity_column_name']])
+                sendValue(tn,b'\x1b[B')
+                sendValue(tn,row[config['container_column_name']])
+                sendValue(tn,b'\x1b[B')
+                check_locn_lane = sendValue(tn,'\r\n')
                 
                 # Lưu kết quả row_array[1] vào cột config['result_column_name']
                 # ...
@@ -156,11 +134,11 @@ for index, row in excels.iterrows():
                 print("Picked "+row_array[1]+" CS from location "+row[config['location_column_name']])
                 
             # Kiểm tra màn hình hiện tại có dòng "Scan Locn/Lane:" hay không?
-            for row_locn_lane in check_locn_lane.split("\n"):
+            for row_locn_lane in check_locn_lane.splitlines():
                 if "Locn/Lane" in row_locn_lane:
                     # Nhập cửa
-                    sendValue(channel,door)
-                    sendValue(channel,'\r')
+                    sendValue(tn,door)
+                    sendValue(tn,'\r\n')
                     
                     # Xuất kết quả ra màn hình: "Taked item/s to config['export_door_column_name']"
                     # ...
@@ -171,9 +149,9 @@ for index, row in excels.iterrows():
             # if excels[i][config['container_column_name']] != excels[i+1][config['container_column_name']]:
             #    sendValue(channel,b'\x1b[B')
             #    sendValue(channel,b'\x1b[B')
-            #    sendValue(channel,'\r')
+            #    sendValue(channel,'\r\n')
             #    sendValue(channel,excels[i][config['export_door_column_name']])
-            #    sendValue(channel,'\r')
+            #    sendValue(channel,'\r\n')
                 
             break
 
@@ -190,13 +168,13 @@ for index, row in excels.iterrows():
         sys.exit(1)
 
 # Kiểm tra lần cuối xem có yêu cầu đưa ra cửa không
-check_locn_lane = sendValue(channel,'\r')
+check_locn_lane = sendValue(tn,'\r\n')
 
-for row_locn_lane in check_locn_lane.split("\n"):
+for row_locn_lane in check_locn_lane.splitlines():
     if "Locn/Lane" in row_locn_lane:
         # Nhập cửa
-        sendValue(channel,door)
-        sendValue(channel,'\r')
+        sendValue(tn,door)
+        sendValue(tn,'\r\n')
         
         # Xuất kết quả ra màn hình: "Taked item/s to config['export_door_column_name']"
         # ...
@@ -213,8 +191,7 @@ excels.to_excel('Result_'+config['excel_file_name'], index=False)
 # Gửi các lệnh
 
 # Đóng kết nối
-channel.close()
-client.close()
+tn.close()
 
 print('Done!')
 input('Press any key to close...')
