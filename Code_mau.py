@@ -18,22 +18,6 @@ global config
 with open("config.json") as json_config_file:
     config = json.load(json_config_file)
 
-def read_excel_to_json(file_path):
-    # Đọc file Excel
-    df = pd.read_excel(file_path)
-    # Chuyển đổi dữ liệu thành mảng JSON
-    json_data = df.to_json(orient='records')
-
-    # Trả về mảng JSON
-    return json.loads(json_data)
-
-def save_json_to_excel(json_data, file_path):
-    # Tạo DataFrame từ mảng JSON
-    df = pd.DataFrame(json_data)
-    
-    # Lưu DataFrame thành file Excel
-    df.to_excel(file_path, index=False)
-
 def sendValue(tn, value, timeout=0):
     time.sleep(timeout)
     tn.write(value.encode('ascii'))
