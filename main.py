@@ -72,6 +72,8 @@ except:
 channel = client.invoke_shell()
 channel.settimeout(30)
 
+time.sleep(4)
+
 if config['need_login'] == 'yes':
     # login
     sendValue(channel,'\r',timout=4) # Vì đây là login đầu tiên nên phải đợi 3s để load hoàn toàn
@@ -100,18 +102,24 @@ excels = excels.drop(excels.columns[0], axis=1)
 # tạo mảng cho cột kết quả
 result_column = []
 
+skip_location = config['skip_location']
+
 for index, row in excels.iterrows():
-    sendValue(channel,row[config['location_column_name']])
+    if skip_location == 'no':
+        sendValue(channel,row[config['location_column_name']])
+    else:
+        skip_location = 'no'
+
     output = sendValue(channel,'\r')
 
     # Lay noi dung man hinh de tach chuoi
     isset_pick = False
-    for row in output.split("\n"):
-        if "Pick" in row:
+    for line in output.split("\n"):
+        if "Pick" in line:
             isset_pick = True
 
-            row_array = row.strip().split(" ")
-            if int(row_array[1]) <= row[config['quantity_column_name']]:
+            row_array = line.strip().split(" ")
+            if int(row_array[1]) <= row[config['quantity_column_name']] :
                 sendValue(channel,b'\x1b[B')
                 sendValue(channel,'\r')
                 sendValue(channel,row_array[1])
@@ -126,7 +134,7 @@ for index, row in excels.iterrows():
                 result_column.append(row_array[1])
                 # Xuất kết quả ra màn hình: "Picked row_array[1] CS from location config['location_column_name']"
                 # ...
-                print("Picked "+row_array[1]+" CS from location "+config['location_column_name'])
+                print("Picked "+row_array[1]+" CS from location "+row[config['location_column_name']])
             else:
                 sendValue(channel,b'\x1b[B')
                 sendValue(channel,b'\x1b[B')
@@ -145,7 +153,7 @@ for index, row in excels.iterrows():
                 result_column.append(row_array[1])
                 # Xuất kết quả ra màn hình: "Picked row_array[1] CS from location config['location_column_name']"
                 # ...
-                print("Picked "+row_array[1]+" CS from location "+config['location_column_name'])
+                print("Picked "+row_array[1]+" CS from location "+row[config['location_column_name']])
                 
             # Kiểm tra màn hình hiện tại có dòng "Scan Locn/Lane:" hay không?
             for row_locn_lane in check_locn_lane.split("\n"):
@@ -172,14 +180,27 @@ for index, row in excels.iterrows():
     # Nếu isset_pick = False thì có nghĩa là màn hình này là màn hình báo lỗi
     if isset_pick == False:
         #row[config['result_column_name']] = "Error!!!"
-        result_column.append("Error!!!")
-        excels[config['result_column_name']] = result_column
+        #result_column.append("Error!!!")
+        #excels[config['result_column_name']] = result_column
         #save_json_to_excel(excels, 'Result_'+config['excel_file_name'])
-        excels.to_excel('Result_'+config['excel_file_name'], index=False)
+        #excels.to_excel('Result_'+config['excel_file_name'], index=False)
 
-        print(config['location_column_name']+" error!!!")
+        print(row[config['location_column_name']]+" error!!!")
         input('Press any key to close...')
         sys.exit(1)
+
+# Kiểm tra lần cuối xem có yêu cầu đưa ra cửa không
+check_locn_lane = sendValue(channel,'\r')
+
+for row_locn_lane in check_locn_lane.split("\n"):
+    if "Locn/Lane" in row_locn_lane:
+        # Nhập cửa
+        sendValue(channel,door)
+        sendValue(channel,'\r')
+        
+        # Xuất kết quả ra màn hình: "Taked item/s to config['export_door_column_name']"
+        # ...
+        print("Taked item/s to "+door)
 
 #Ghi xuống file excel
 excels[config['result_column_name']] = result_column
